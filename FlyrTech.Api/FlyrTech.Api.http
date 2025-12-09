@@ -1,0 +1,45 @@
+@FlyrTech.Api_HostAddress = http://localhost:5000
+
+### Get all journey IDs
+GET {{FlyrTech.Api_HostAddress}}/api/journeys
+Accept: application/json
+
+###
+
+### Get specific journey
+GET {{FlyrTech.Api_HostAddress}}/api/journeys/JRN-001
+Accept: application/json
+
+###
+
+### Update segment status (single update)
+PUT {{FlyrTech.Api_HostAddress}}/api/journeys/JRN-001/segments/SEG-001-1/status
+Content-Type: application/json
+
+{
+  "status": "Departed"
+}
+
+###
+
+### Update journey status
+PUT {{FlyrTech.Api_HostAddress}}/api/journeys/JRN-001/status
+Content-Type: application/json
+
+{
+  "status": "InProgress"
+}
+
+###
+
+### Cache demo endpoint
+GET {{FlyrTech.Api_HostAddress}}/api/cache/demo
+Accept: application/json
+
+###
+
+### Get cache value by key
+GET {{FlyrTech.Api_HostAddress}}/api/cache/journey:JRN-001
+Accept: application/json
+
+###

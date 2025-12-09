@@ -1,0 +1,115 @@
+{
+  "journeys": [
+    {
+      "id": "JRN-001",
+      "passengerName": "John Smith",
+      "passengerEmail": "john.smith@email.com",
+      "bookingDate": "2025-12-01T10:30:00Z",
+      "status": "Confirmed",
+      "totalPrice": 850.50,
+      "segments": [
+        {
+          "segmentId": "SEG-001-1",
+          "origin": "MAD",
+          "destination": "BCN",
+          "departureTime": "2025-12-15T08:00:00Z",
+          "arrivalTime": "2025-12-15T09:30:00Z",
+          "flightNumber": "IB3012",
+          "carrier": "Iberia",
+          "status": "Scheduled",
+          "price": 425.25
+        },
+        {
+          "segmentId": "SEG-001-2",
+          "origin": "BCN",
+          "destination": "MAD",
+          "departureTime": "2025-12-20T18:00:00Z",
+          "arrivalTime": "2025-12-20T19:30:00Z",
+          "flightNumber": "IB3025",
+          "carrier": "Iberia",
+          "status": "Scheduled",
+          "price": 425.25
+        }
+      ],
+      "metadata": {
+        "bookingChannel": "Web",
+        "paymentMethod": "CreditCard",
+        "loyaltyNumber": "IB123456789"
+      }
+    },
+    {
+      "id": "JRN-002",
+      "passengerName": "Maria Garcia",
+      "passengerEmail": "maria.garcia@email.com",
+      "bookingDate": "2025-12-01T14:20:00Z",
+      "status": "Confirmed",
+      "totalPrice": 1250.00,
+      "segments": [
+        {
+          "segmentId": "SEG-002-1",
+          "origin": "MAD",
+          "destination": "LON",
+          "departureTime": "2025-12-18T12:00:00Z",
+          "arrivalTime": "2025-12-18T13:30:00Z",
+          "flightNumber": "BA456",
+          "carrier": "British Airways",
+          "status": "Scheduled",
+          "price": 625.00
+        },
+        {
+          "segmentId": "SEG-002-2",
+          "origin": "LON",
+          "destination": "MAD",
+          "departureTime": "2025-12-22T16:00:00Z",
+          "arrivalTime": "2025-12-22T19:30:00Z",
+          "flightNumber": "BA457",
+          "carrier": "British Airways",
+          "status": "Scheduled",
+          "price": 625.00
+        }
+      ],
+      "metadata": {
+        "bookingChannel": "Mobile",
+        "paymentMethod": "PayPal",
+        "loyaltyNumber": "BA987654321"
+      }
+    },
+    {
+      "id": "JRN-003",
+      "passengerName": "Carlos Rodriguez",
+      "passengerEmail": "carlos.rodriguez@email.com",
+      "bookingDate": "2025-12-02T09:15:00Z",
+      "status": "Pending",
+      "totalPrice": 2100.75,
+      "segments": [
+        {
+          "segmentId": "SEG-003-1",
+          "origin": "MAD",
+          "destination": "NYC",
+          "departureTime": "2025-12-25T22:00:00Z",
+          "arrivalTime": "2025-12-26T01:00:00Z",
+          "flightNumber": "AA100",
+          "carrier": "American Airlines",
+          "status": "Scheduled",
+          "price": 1050.37
+        },
+        {
+          "segmentId": "SEG-003-2",
+          "origin": "NYC",
+          "destination": "MAD",
+          "departureTime": "2026-01-05T23:00:00Z",
+          "arrivalTime": "2026-01-06T12:00:00Z",
+          "flightNumber": "AA101",
+          "carrier": "American Airlines",
+          "status": "Scheduled",
+          "price": 1050.38
+        }
+      ],
+      "metadata": {
+        "bookingChannel": "CallCenter",
+        "paymentMethod": "BankTransfer",
+        "loyaltyNumber": "AA555123456"
+      }
+    }
+  ]
+}
