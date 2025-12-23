@@ -2,6 +2,7 @@
   "journeys": [
     {
       "id": "JRN-001",
+      "version": 0,
       "passengerName": "John Smith",
       "passengerEmail": "john.smith@email.com",
       "bookingDate": "2025-12-01T10:30:00Z",
@@ -39,6 +40,7 @@
     },
     {
       "id": "JRN-002",
+      "version": 0,
       "passengerName": "Maria Garcia",
       "passengerEmail": "maria.garcia@email.com",
       "bookingDate": "2025-12-01T14:20:00Z",
@@ -76,6 +78,7 @@
     },
     {
       "id": "JRN-003",
+      "version": 0,
       "passengerName": "Carlos Rodriguez",
       "passengerEmail": "carlos.rodriguez@email.com",
       "bookingDate": "2025-12-02T09:15:00Z",

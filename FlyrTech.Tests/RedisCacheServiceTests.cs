@@ -195,4 +195,62 @@ public class RedisCacheServiceTests
         await Assert.ThrowsAsync<ArgumentException>(
             async () => await _cacheService.GetAsync(invalidKey));
     }
+
+    [Fact]
+    public async Task GetVersionAsync_ShouldReturnZero_WhenKeyDoesNotExist()
+    {
+        // Arrange
+        const string versionKey = "journey:JRN-001:version";
+
+        _mockDatabase
+            .Setup(db => db.StringGetAsync(
+                It.Is<RedisKey>(k => k == versionKey),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(RedisValue.Null);
+
+        // Act
+        var version = await _cacheService.GetVersionAsync(versionKey);
+
+        // Assert
+        Assert.Equal(0, version);
+    }
+
+    [Fact]
+    public async Task GetVersionAsync_ShouldReturnParsedValue_WhenKeyExists()
+    {
+        // Arrange
+        const string versionKey = "journey:JRN-001:version";
+        const long expectedVersion = 42;
+
+        _mockDatabase
+            .Setup(db => db.StringGetAsync(
+                It.Is<RedisKey>(k => k == versionKey),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(new RedisValue(expectedVersion.ToString()));
+
+        // Act
+        var version = await _cacheService.GetVersionAsync(versionKey);
+
+        // Assert
+        Assert.Equal(expectedVersion, version);
+    }
+
+    [Fact]
+    public async Task GetVersionAsync_ShouldReturnZero_WhenValueIsNotNumeric()
+    {
+        // Arrange
+        const string versionKey = "journey:JRN-001:version";
+
+        _mockDatabase
+            .Setup(db => db.StringGetAsync(
+                It.Is<RedisKey>(k => k == versionKey),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(new RedisValue("not-a-number"));
+
+        // Act
+        var version = await _cacheService.GetVersionAsync(versionKey);
+
+        // Assert
+        Assert.Equal(0, version);
+    }
 }

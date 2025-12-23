@@ -15,12 +15,12 @@ public interface IJourneyService
     /// <summary>
     /// Updates a specific segment status within a journey
     /// </summary>
-    Task<bool> UpdateSegmentStatusAsync(string journeyId, string segmentId, string newStatus);
+    Task<UpdateResult> UpdateSegmentStatusAsync(string journeyId, string segmentId, string newStatus);
 
     /// <summary>
     /// Updates the overall journey status
     /// </summary>
-    Task<bool> UpdateJourneyStatusAsync(string journeyId, string newStatus);
+    Task<UpdateResult> UpdateJourneyStatusAsync(string journeyId, string newStatus);
 
     /// <summary>
     /// Gets all journey IDs

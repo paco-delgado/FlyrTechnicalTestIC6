@@ -9,6 +9,8 @@ public class JourneyService : IJourneyService
     private readonly ICacheService _cacheService;
     private const string JourneyKeyPrefix = "journey:";
     private const string JourneyIdsKey = "journey:ids";
+    private const string JourneyVersionKeySuffix = ":version";
+    private const int MaxUpdateRetries = 20;
 
     public JourneyService(ICacheService cacheService)
     {
@@ -29,7 +31,7 @@ public class JourneyService : IJourneyService
         return JsonSerializer.Deserialize<Journey>(json);
     }
 
-    public async Task<bool> UpdateSegmentStatusAsync(string journeyId, string segmentId, string newStatus)
+    public async Task<UpdateResult> UpdateSegmentStatusAsync(string journeyId, string segmentId, string newStatus)
     {
         if (string.IsNullOrWhiteSpace(journeyId))
             throw new ArgumentException("Journey ID cannot be null or empty", nameof(journeyId));
@@ -37,45 +39,76 @@ public class JourneyService : IJourneyService
         if (string.IsNullOrWhiteSpace(segmentId))
             throw new ArgumentException("Segment ID cannot be null or empty", nameof(segmentId));
 
-        var journey = await GetJourneyAsync(journeyId);
-        
-        if (journey == null)
-            return false;
+        var dataKey = GetJourneyKey(journeyId);
+        var versionKey = GetJourneyVersionKey(journeyId);
 
-        var segment = journey.Segments.FirstOrDefault(s => s.SegmentId == segmentId);
-        
-        if (segment == null)
-            return false;
+        for (int attempt = 1; attempt <= MaxUpdateRetries; attempt++)
+        {
+            var expectedVersion = await _cacheService.GetVersionAsync(versionKey);
 
-        // Simulate some processing time
-        await Task.Delay(10);
+            var journey = await GetJourneyAsync(journeyId);
+            if (journey == null)
+                return UpdateResult.NotFound;
 
-        segment.Status = newStatus;
+            var segment = journey.Segments.FirstOrDefault(s => s.SegmentId == segmentId);
+            if (segment == null)
+                return UpdateResult.NotFound;
 
-        var key = GetJourneyKey(journeyId);
-        var json = JsonSerializer.Serialize(journey);
-        await _cacheService.SetAsync(key, json);
+            // Simulate some processing time
+            await Task.Delay(10);
 
-        return true;
+            segment.Status = newStatus;
+
+            var newVersion = expectedVersion + 1;
+            journey.Version = newVersion;
+            var newJson = JsonSerializer.Serialize(journey);
+
+            var committed = await _cacheService.TrySetJsonIfVersionMatchesAsync(
+                dataKey, versionKey, expectedVersion, newJson, newVersion);
+
+            if (committed) return UpdateResult.Success;
+
+            // Conflict => retry with backoff + jitter
+            await Task.Delay((10 * attempt) + Random.Shared.Next(0, 10));
+        }
+
+        return UpdateResult.Conflict;
     }
 
-    public async Task<bool> UpdateJourneyStatusAsync(string journeyId, string newStatus)
+    public async Task<UpdateResult> UpdateJourneyStatusAsync(string journeyId, string newStatus)
     {
         if (string.IsNullOrWhiteSpace(journeyId))
             throw new ArgumentException("Journey ID cannot be null or empty", nameof(journeyId));
 
-        var journey = await GetJourneyAsync(journeyId);
-        
-        if (journey == null)
-            return false;
+        var dataKey = GetJourneyKey(journeyId);
+        var versionKey = GetJourneyVersionKey(journeyId);
 
-        journey.Status = newStatus;
+        for (int attempt = 1; attempt <= MaxUpdateRetries; attempt++)
+        {
+            var expectedVersion = await _cacheService.GetVersionAsync(versionKey);
 
-        var key = GetJourneyKey(journeyId);
-        var json = JsonSerializer.Serialize(journey);
-        await _cacheService.SetAsync(key, json);
+            var journey = await GetJourneyAsync(journeyId);
+            if (journey == null)
+                return UpdateResult.NotFound;
 
-        return true;
+            journey.Status = newStatus;
+
+            var newVersion = expectedVersion + 1;
+            journey.Version = newVersion;
+
+            var newJson = JsonSerializer.Serialize(journey);
+
+            var committed = await _cacheService.TrySetJsonIfVersionMatchesAsync(
+                dataKey, versionKey, expectedVersion, newJson, newVersion);
+
+            if (committed)
+                return UpdateResult.Success;
+
+            // Conflict => retry with backoff + jitter
+            await Task.Delay((10 * attempt) + Random.Shared.Next(0, 10));
+        }
+
+        return UpdateResult.Conflict;
     }
 
     public async Task<List<string>> GetAllJourneyIdsAsync()
@@ -96,8 +129,12 @@ public class JourneyService : IJourneyService
         foreach (var journey in journeys)
         {
             var key = GetJourneyKey(journey.Id);
+            var versionKey = GetJourneyVersionKey(journey.Id);
+
             var json = JsonSerializer.Serialize(journey);
+
             await _cacheService.SetAsync(key, json);
+            await _cacheService.SetAsync(versionKey, journey.Version.ToString());
         }
 
         var journeyIds = journeys.Select(j => j.Id).ToList();
@@ -106,4 +143,5 @@ public class JourneyService : IJourneyService
     }
 
     private static string GetJourneyKey(string journeyId) => $"{JourneyKeyPrefix}{journeyId}";
+    private static string GetJourneyVersionKey(string journeyId) => $"{JourneyKeyPrefix}{journeyId}{JourneyVersionKeySuffix}";
 }

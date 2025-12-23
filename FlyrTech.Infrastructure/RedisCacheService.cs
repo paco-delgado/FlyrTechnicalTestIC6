@@ -67,4 +67,52 @@ public class RedisCacheService : ICacheService
 
         return await _database.KeyExistsAsync(key);
     }
+
+    /// <inheritdoc/>
+    public async Task<long> GetVersionAsync(string versionKey)
+    {
+        if (string.IsNullOrWhiteSpace(versionKey))
+            throw new ArgumentException("Version key cannot be null or empty", nameof(versionKey));
+
+        var value = await _database.StringGetAsync(versionKey);
+        
+        if (!value.HasValue)
+            return 0;
+
+        return long.TryParse(value.ToString(), out var version) ? version : 0;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> TrySetJsonIfVersionMatchesAsync(
+        string dataKey,
+        string versionKey,
+        long expectedVersion,
+        string newJson,
+        long newVersion)
+    {
+        if (string.IsNullOrWhiteSpace(dataKey))
+            throw new ArgumentException("Data key cannot be null or empty", nameof(dataKey));
+
+        if (string.IsNullOrWhiteSpace(versionKey))
+            throw new ArgumentException("Version key cannot be null or empty", nameof(versionKey));
+
+        if (newJson == null)
+            throw new ArgumentNullException(nameof(newJson));
+
+        if (expectedVersion < 0)
+            throw new ArgumentOutOfRangeException(nameof(expectedVersion));
+
+        if (newVersion != expectedVersion + 1)
+            throw new ArgumentException("newVersion must be expectedVersion + 1", nameof(newVersion));
+
+        var tran = _database.CreateTransaction();
+
+        // Condition: versionKey must equal expectedVersion (stored as string)
+        tran.AddCondition(Condition.StringEqual(versionKey, expectedVersion.ToString()));
+
+        _ = tran.StringSetAsync(dataKey, newJson);
+        _ = tran.StringSetAsync(versionKey, newVersion.ToString());
+
+        return await tran.ExecuteAsync();
+    }
 }

@@ -180,20 +180,21 @@ app.MapGet("/api/journeys/{journeyId}", async (string journeyId, IJourneyService
 app.MapPut("/api/journeys/{journeyId}/segments/{segmentId}/status", 
     async (string journeyId, string segmentId, UpdateStatusRequest request, IJourneyService journeyService) =>
 {
-    var success = await journeyService.UpdateSegmentStatusAsync(journeyId, segmentId, request.Status);
+    var result = await journeyService.UpdateSegmentStatusAsync(journeyId, segmentId, request.Status);
     
-    if (!success)
+    return result switch
     {
-        return Results.NotFound(new { message = $"Journey '{journeyId}' or segment '{segmentId}' not found" });
-    }
-    
-    return Results.Ok(new 
-    { 
-        message = "Segment status updated successfully",
-        journeyId,
-        segmentId,
-        newStatus = request.Status
-    });
+        UpdateResult.Success => Results.Ok(new
+        {
+            message = "Segment status updated successfully",
+            journeyId,
+            segmentId,
+            newStatus = request.Status
+        }),
+        UpdateResult.NotFound => Results.NotFound(new { message = $"Journey '{journeyId}' or segment '{segmentId}' not found" }),
+        UpdateResult.Conflict => Results.Conflict(new { message = "Concurrency conflict. Please retry." }),
+        _ => Results.StatusCode(500)
+    };
 })
 .WithName("UpdateSegmentStatus")
 .WithOpenApi()
@@ -202,19 +203,20 @@ app.MapPut("/api/journeys/{journeyId}/segments/{segmentId}/status",
 app.MapPut("/api/journeys/{journeyId}/status", 
     async (string journeyId, UpdateStatusRequest request, IJourneyService journeyService) =>
 {
-    var success = await journeyService.UpdateJourneyStatusAsync(journeyId, request.Status);
-    
-    if (!success)
+    var result = await journeyService.UpdateJourneyStatusAsync(journeyId, request.Status);
+
+    return result switch
     {
-        return Results.NotFound(new { message = $"Journey '{journeyId}' not found" });
-    }
-    
-    return Results.Ok(new 
-    { 
-        message = "Journey status updated successfully",
-        journeyId,
-        newStatus = request.Status
-    });
+        UpdateResult.Success => Results.Ok(new
+        {
+            message = "Journey status updated successfully",
+            journeyId,
+            newStatus = request.Status
+        }),
+        UpdateResult.NotFound => Results.NotFound(new { message = $"Journey '{journeyId}' not found" }),
+        UpdateResult.Conflict => Results.Conflict(new { message = "Concurrency conflict. Please retry." }),
+        _ => Results.StatusCode(500)
+    };
 })
 .WithName("UpdateJourneyStatus")
 .WithOpenApi();
@@ -225,3 +227,5 @@ app.Run();
 record CacheRequest(string Value, int? ExpirationSeconds);
 record UpdateStatusRequest(string Status);
 record JourneysData(List<Journey> Journeys);
+
+public partial class Program { }
